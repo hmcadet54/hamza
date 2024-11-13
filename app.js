@@ -1,94 +1,54 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import bodyParser from 'body-parser';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import passport from 'passport';
-import session from 'express-session';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import route from "./routes/routes.js";
-import { cloudinaryConfig } from './utils/cloudinary.js';
-import { googleAuth } from './controllers/googleAuthController.js';
+import pool from './config/database.js';
 
 dotenv.config();
-cloudinaryConfig();
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: [
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-      'http://localhost:5173'
-    ].filter(Boolean),
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Test the database connection using async/await
+async function testDatabaseConnection() {
+  try {
+    await pool.query('SELECT NOW()');
+    console.log('Connected to database');
+  } catch (err) {
+    console.error('Database connection error:', err);
+    process.exit(1); // Exit the process on connection error
   }
-});
+}
 
-// Updated CORS configuration
-app.use(cors({ 
-  origin: [
-    process.env.FRONTEND_URL,
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ].filter(Boolean),
-  credentials: true // Important for cookies/sessions
-}));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// Configure session middleware with MemoryStore
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your_session_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24, // 1 day
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-  }
-}));
-
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`
-}, googleAuth));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
+testDatabaseConnection();
 
 app.get('/', (req, res) => {
-    res.send('Server is up and running!');
+  res.send('Server is up and running!');
 });
 
 const PORT = process.env.PORT || 5000;
 
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
-httpServer.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.post('/api/patients', async (req, res) => {
+  try {
+    const { name, age, tel, address, comorbids, diagnosis, height, weight, blood_pressure, pulse, temperature, diagnosis_patient } = req.body;
+
+    const [result] = await pool.query(
+      'INSERT INTO patient_history (name, age, tel, address, comorbids, diagnosis, height, weight, blood_pressure, pulse, temperature, diagnosis_patient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, age, tel, address, comorbids, diagnosis, height, weight, blood_pressure, pulse, temperature, diagnosis_patient]
+    );
+
+    res.status(201).json({ id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-app.use('/api', route);
 
-export { io };
 export default app;
