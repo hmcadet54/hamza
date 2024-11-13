@@ -50,5 +50,14 @@ app.post('/api/patients', async (req, res) => {
   }
 });
 
+app.get('/api/patients', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM patient_history');
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error('Error fetching patients:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 export default app;
