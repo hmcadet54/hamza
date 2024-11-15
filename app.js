@@ -39,7 +39,7 @@ app.post('/api/patients', async (req, res) => {
     const { name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi, diagnosis_patient } = req.body;
 
     const [result] = await pool.query(
-      'INSERT INTO patient_historyV1 (name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi diagnosis_patient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO patient_historyV1 (name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi, diagnosis_patient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi, diagnosis_patient]
     );
 
