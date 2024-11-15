@@ -36,11 +36,11 @@ app.listen(PORT, () => {
 
 app.post('/api/patients', async (req, res) => {
   try {
-    const { name, age, tel, address, comorbids, diagnosis, height, weight, blood_pressure, pulse, temperature, diagnosis_patient } = req.body;
+    const { name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi, diagnosis_patient } = req.body;
 
     const [result] = await pool.query(
-      'INSERT INTO patient_history (name, age, tel, address, comorbids, diagnosis, height, weight, blood_pressure, pulse, temperature, diagnosis_patient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, age, tel, address, comorbids, diagnosis, height, weight, blood_pressure, pulse, temperature, diagnosis_patient]
+      'INSERT INTO patient_historyV1 (name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi diagnosis_patient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, age, tel, address, height, weight, blood_pressure, pulse, temperature, sugar, bmi, diagnosis_patient]
     );
 
     res.status(201).json({ id: result.insertId });
@@ -52,7 +52,7 @@ app.post('/api/patients', async (req, res) => {
 
 app.get('/api/patients', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM patient_history');
+    const [rows] = await pool.query('SELECT * FROM patient_historyV1');
     res.status(200).json(rows);
   } catch (err) {
     console.error('Error fetching patients:', err);
